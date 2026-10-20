@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Шале — заказ</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg:#1a120d; --card:#2a1d15; --text:#f4e9dc; --muted:#a8927a; --accent:#d9a45b; --danger:#e07a6a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, system-ui, sans-serif; background:var(--bg); color:var(--text); padding-bottom:100px; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:12px 16px 8px; border-bottom:1px solid #3a2a20; }
+  h1 { margin:0; font-size:20px; color:var(--accent); }
+  .sub { color:var(--muted); font-size:13px; margin-top:2px; }
+  .tabs { display:flex; gap:8px; overflow-x:auto; margin-top:10px; padding-bottom:4px; }
+  .tab { flex:none; padding:6px 12px; border:1px solid var(--accent); border-radius:16px; background:none; color:var(--accent); font-size:14px; }
+  .tab.active { background:var(--accent); color:var(--bg); }
+  main { padding:12px 16px; }
+  .item { display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--card); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .info { flex:1; }
+  .name { font-size:15px; }
+  .price { color:var(--accent); font-size:14px; margin-top:4px; }
+  .qty { display:flex; align-items:center; gap:8px; }
+  .qty button { width:32px; height:32px; border-radius:50%; border:none; background:var(--accent); color:var(--bg); font-size:18px; }
+  .qty span { min-width:18px; text-align:center; }
+  .box { background:var(--card); border-radius:12px; padding:12px; margin-bottom:12px; }
+  label { display:block; font-size:14px; color:var(--muted); margin:10px 0 4px; }
+  label:first-child { margin-top:0; }
+  input, textarea, select { width:100%; padding:10px; border-radius:8px; border:1px solid #4a3528; background:var(--bg); color:var(--text); font-size:15px; font-family:inherit; }
+  .seg { display:flex; gap:8px; }
+  .seg button { flex:1; padding:10px; border-radius:8px; border:1px solid var(--accent); background:none; color:var(--accent); font-size:14px; }
+  .seg button.active { background:var(--accent); color:var(--bg); }
+  .row { display:flex; justify-content:space-between; gap:8px; font-size:15px; padding:4px 0; }
+  .total { font-weight:bold; color:var(--accent); font-size:17px; border-top:1px solid #3a2a20; margin-top:6px; padding-top:8px; }
+  .hidden { display:none !important; }
+  .error { color:var(--danger); font-size:14px; margin:8px 0; min-height:18px; }
+  .hint { color:var(--muted); font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Шале</h1>
+  <div class="sub">07:00–23:00 · ул. Шота Руставели, 89</div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<main id="menuView">
+  <div id="items"></div>
+</main>
+
+<main id="checkoutView" class="hidden">
+  <section class="box">
+    <div class="seg">
+      <button id="modeDelivery" class="active">Доставка</button>
+      <button id="modePickup">Самовывоз</button>
+    </div>
+  </section>
+
+  <section class="box" id="addressBox">
+    <label>Адрес доставки</label>
+    <textarea id="address" rows="2" placeholder="Улица, дом, подъезд, квартира"></textarea>
+  </section>
+
+  <section class="box">
+    <label>Время</label>
+    <div class="seg">
+      <button id="timeAsap" class="active">Как можно скорее</button>
+      <button id="timeLater">Ко времени</button>
+    </div>
+    <select id="slot" class="hidden" style="margin-top:8px"></select>
+  </section>
+
+  <section class="box">
+    <label>Телефон для связи</label>
+    <input id="phone" type="tel" placeholder="+998 __ ___ __ __">
+    <label>Комментарий</label>
+    <textarea id="comment" rows="2" placeholder="Пожелания к заказу"></textarea>
+  </section>
+
+  <section class="box">
+    <div class="row"><span>Оплата</span><span>Переводом на карту</span></div>
+    <div class="hint">Реквизиты для перевода сообщит администратор после подтверждения заказа.</div>
+  </section>
+
+  <section class="box" id="summary"></section>
+  <div id="error" class="error"></div>
+</main>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+tg.MainButton.setParams({ color: '#d9a45b', text_color: '#1a120d' });
+
+let menu = null;
+let activeCat = 0;
+let cart = {};
+let mode = 'delivery';
+let timeMode = 'asap';
+let checkoutOpen = false;
+
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('ru-RU') + ' сум';
+const pad = n => String(n).padStart(2, '0');
+
+fetch('menu.json')
+  .then(r => r.json())
+  .then(m => { menu = m; renderTabs(); renderItems(); buildSlots(); });
+
+/* ---------- Меню ---------- */
+
+function renderTabs() {
+  $('tabs').innerHTML = menu.categories.map((c, i) =>
+    `<button class="tab ${i === activeCat ? 'active' : ''}" data-i="${i}">${c.title}</button>`
+  ).join('');
+}
+
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab');
+  if (!b) return;
+  activeCat = Number(b.dataset.i);
+  renderTabs();
+  renderItems();
+});
+
+function renderItems() {
+  const cat = menu.categories[activeCat];
+  $('items').innerHTML = cat.items.map(it => {
+    const q = cart[it.id] || 0;
+    const note = it.note ? ' · ' + it.note : '';
+    return `<div class="item">
+      <div class="info">
+        <div class="name">${it.name}</div>
+        <div class="price">${fmt(it.price)}${note}</div>
+      </div>
+      <div class="qty">
+        <button data-id="${it.id}" data-d="-1">−</button>
+        <span>${q}</span>
+        <button data-id="${it.id}" data-d="1">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+$('items').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]');
+  if (!b) return;
+  const id = b.dataset.id;
+  const n = (cart[id] || 0) + Number(b.dataset.d);
+  if (n <= 0) delete cart[id];
+  else cart[id] = Math.min(n, 50);
+  renderItems();
+  updateMainButton();
+});
+
+/* ---------- Корзина ---------- */
+
+function allItems() {
+  return menu.categories.flatMap(c => c.items);
+}
+
+function cartLines() {
+  const all = allItems();
+  return Object.entries(cart).map(([id, q]) => {
+    const it = all.find(x => x.id === id);
+    return { it, q, sum: it.price * q };
+  });
+}
+
+function total() {
+  return cartLines().reduce((s, l) => s + l.sum, 0);
+}
+
+function count() {
+  return Object.values(cart).reduce((s, q) => s + q, 0);
+}
+
+function updateMainButton() {
+  if (checkoutOpen) {
+    tg.MainButton.setText('Отправить заказ · ' + fmt(total()));
+  } else if (count() > 0) {
+    tg.MainButton.setText('Оформить · ' + fmt(total()));
+  } else {
+    tg.MainButton.hide();
+    return;
+  }
+  tg.MainButton.show();
+}
+
+/* ---------- Оформление ---------- */
+
+function openCheckout() {
+  if (count() === 0) return;
+  checkoutOpen = true;
+  $('menuView').classList.add('hidden');
+  $('checkoutView').classList.remove('hidden');
+  renderSummary();
+  tg.BackButton.show();
+  updateMainButton();
+  window.scrollTo(0, 0);
+}
+
+function closeCheckout() {
+  checkoutOpen = false;
+  $('checkoutView').classList.add('hidden');
+  $('menuView').classList.remove('hidden');
+  tg.BackButton.hide();
+  updateMainButton();
+}
+
+tg.BackButton.onClick(closeCheckout);
+
+tg.MainButton.onClick(() => {
+  if (checkoutOpen) submit();
+  else openCheckout();
+});
+
+function renderSummary() {
+  $('summary').innerHTML =
+    cartLines().map(l =>
+      `<div class="row"><span>${l.it.name} × ${l.q}</span><span>${fmt(l.sum)}</span></div>`
+    ).join('') +
+    `<div class="row total"><span>Итого</span><span>${fmt(total())}</span></div>`;
+}
+
+function setMode(m) {
+  mode = m;
+  $('modeDelivery').classList.toggle('active', m === 'delivery');
+  $('modePickup').classList.toggle('active', m === 'pickup');
+  $('addressBox').classList.toggle('hidden', m !== 'delivery');
+}
+$('modeDelivery').onclick = () => setMode('delivery');
+$('modePickup').onclick = () => setMode('pickup');
+
+function setTime(t) {
+  timeMode = t;
+  $('timeAsap').classList.toggle('active', t === 'asap');
+  $('timeLater').classList.toggle('active', t === 'later');
+  $('slot').classList.toggle('hidden', t !== 'later');
+}
+$('timeAsap').onclick = () => setTime('asap');
+$('timeLater').onclick = () => setTime('later');
+
+// Слоты с шагом 15 минут: от текущего времени + 30 мин (но не раньше 07:00) до 22:45.
+// Время ресторана: Ташкент, UTC+5, без перехода на летнее время.
+function buildSlots() {
+  const future = new Date(Date.now() + 30 * 60000 + 5 * 3600000);
+  let m = future.getUTCHours() * 60 + future.getUTCMinutes();
+  m = Math.ceil(m / 15) * 15;
+  const open = 7 * 60;
+  const close = 22 * 60 + 45;
+  if (m < open) m = open;
+  const opts = [];
+  for (let t = m; t <= close; t += 15) {
+    opts.push(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
+  }
+  $('slot').innerHTML = opts.length
+    ? opts.map(o => `<option value="${o}">${o}</option>`).join('')
+    : '<option value="">Сегодня приём заказов закрыт</option>';
+}
+
+function showError(text) {
+  $('error').textContent = text;
+}
+
+function submit() {
+  showError('');
+  const lines = cartLines();
+  if (!lines.length) return;
+
+  const address = $('address').value.trim().slice(0, 300);
+  const phone = $('phone').value.trim();
+  const comment = $('comment').value.trim().slice(0, 300);
+
+  if (mode === 'delivery' && address.length < 5) {
+    return showError('Укажите адрес доставки');
+  }
+  if (!/^\+?\d[\d\s()-]{7,}$/.test(phone)) {
+    return showError('Укажите телефон для связи');
+  }
+  if (timeMode === 'later' && !$('slot').value) {
+    return showError('Выберите время');
+  }
+
+  const payload = {
+    v: 1,
+    mode,
+    address: mode === 'delivery' ? address : '',
+    phone,
+    time: timeMode === 'asap' ? 'asap' : $('slot').value,
+    comment,
+    items: Object.entries(cart).map(([id, qty]) => ({ id, qty }))
+  };
+
+  tg.MainButton.showProgress();
+  // Telegram закроет мини-апп и передаст данные боту (обработчик web_app_data)
+  tg.sendData(JSON.stringify(payload));
+}
+</script>
+</body>
+</html>

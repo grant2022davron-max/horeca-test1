@@ -1,0 +1,97 @@
+{
+  "currency": "UZS",
+  "restaurant": {
+    "name": "Шале",
+    "address": "ул. Шота Руставели, 89",
+    "hours": "07:00-23:00"
+  },
+  "categories": [
+    {
+      "id": "snacks",
+      "title": "Закуски и хлеб",
+      "items": [
+        {"id": "bread_malt", "name": "Солодовый хлеб", "price": 30000},
+        {"id": "bread_white", "name": "Белый хлеб", "price": 20000},
+        {"id": "garlic_beer", "name": "Гарлики из пивного хлеба", "price": 25000},
+        {"id": "fries", "name": "Картофель фри", "price": 50000},
+        {"id": "potato_home", "name": "Картофель по-домашнему", "price": 65000},
+        {"id": "grill_veg", "name": "Овощи на гриле с фетой и соусом чимичурри", "price": 90000},
+        {"id": "popcorn_shrimp", "name": "Попкорн из креветок", "price": 95000},
+        {"id": "bbq_wings", "name": "Крылышки BBQ", "price": 85000},
+        {"id": "spreads", "name": "Намазки с солодовым хлебом", "price": 90000},
+        {"id": "eggplant_sote", "name": "Соте из баклажанов", "price": 90000},
+        {"id": "chebureki", "name": "Чебуреки с мясом", "price": 120000},
+        {"id": "potato_crumb_trout", "name": "Крошка-картошка с форелью", "price": 120000},
+        {"id": "potato_crumb_beef", "name": "Крошка-картошка с говядиной", "price": 90000},
+        {"id": "potato_crumb_herring", "name": "Крошка-картошка с сельдью", "price": 90000},
+        {"id": "rostbif", "name": "Ростбиф с зеленью и горчичным соусом", "price": 180000},
+        {"id": "tartar", "name": "Тартар из говядины и мозговой костью", "price": 150000}
+      ]
+    },
+    {
+      "id": "salads",
+      "title": "Салаты",
+      "items": [
+        {"id": "grand_caesar", "name": "Гранд цезарь", "price": 180000},
+        {"id": "shrimp_romano", "name": "Салат с креветками и романо", "price": 115000},
+        {"id": "green_seeds", "name": "Зелёный салат с карамелизированными семечками подсолнуха", "price": 110000},
+        {"id": "veg_sour_cream", "name": "Овощной салат со сметаной и хреном", "price": 100000}
+      ]
+    },
+    {
+      "id": "soups",
+      "title": "Супы и первые блюда",
+      "items": [
+        {"id": "bogatyr_pelmeni", "name": "Богатырские пельмени", "price": 105000},
+        {"id": "pelmeni_broth", "name": "Пельмени с бульоном", "price": 80000},
+        {"id": "borsch", "name": "Борщ с солодовыми пампушками, свежей зеленью, соусом из хрена и вяленой кониной", "price": 150000},
+        {"id": "okroshka", "name": "Окрошка с ростбифом и мороженым из хрена", "price": 95000}
+      ]
+    },
+    {
+      "id": "khachapuri",
+      "title": "Хачапури",
+      "items": [
+        {"id": "khach_megrel", "name": "Хачапури по-мегрельски", "price": 98000},
+        {"id": "khach_classic", "name": "Хачапури классический", "price": 102000},
+        {"id": "khach_mushroom", "name": "Хачапури с грибами и трюфелем", "price": 145000},
+        {"id": "khach_beef", "name": "Хачапури с тушеной говядиной и луком конфи", "price": 160000},
+        {"id": "khach_fig", "name": "Хачапури с инжиром, мёдом и тимьяном", "price": 145000}
+      ]
+    },
+    {
+      "id": "mains",
+      "title": "Горячие блюда",
+      "items": [
+        {"id": "set_company", "name": "Сет на компанию", "price": 320000},
+        {"id": "salmon", "name": "Лосось в глазури терияки с романо", "price": 310000},
+        {"id": "campanelle", "name": "Кампанелле с креветками", "price": 180000},
+        {"id": "bifteks", "name": "Бифштекс с перечным соусом и картофельными чипсами", "price": 150000},
+        {"id": "stroganoff", "name": "Бефстроганов с картофельным пюре", "price": 165000},
+        {"id": "kiev", "name": "Котлета по-киевски", "price": 135000},
+        {"id": "pasta_flotski", "name": "Макароны по-флотски", "price": 125000},
+        {"id": "burger", "name": "Бургер с говядиной и картофелем фри", "price": 180000},
+        {"id": "chicken_adjika", "name": "Цыплёнок с аджикой и лечо", "price": 135000},
+        {"id": "kupaty", "name": "Купаты с картофельным пюре и зеленым горошком", "price": 150000},
+        {"id": "chicken_zucchini", "name": "Куриная грудка с кабачком", "price": 110000}
+      ]
+    },
+    {
+      "id": "steaks",
+      "title": "Стейки",
+      "items": [
+        {"id": "striploin", "name": "Стриплойн", "price": 135000, "note": "цена за 100 г"},
+        {"id": "ribeye", "name": "Рибай", "price": 180000, "note": "цена за 100 г"}
+      ]
+    },
+    {
+      "id": "desserts",
+      "title": "Десерты",
+      "items": [
+        {"id": "prague", "name": "Прага", "price": 85000},
+        {"id": "medovik", "name": "Медовик", "price": 65000},
+        {"id": "potato_cake", "name": "Пирожное «Картошка»", "price": 80000}
+      ]
+    }
+  ]
+}
